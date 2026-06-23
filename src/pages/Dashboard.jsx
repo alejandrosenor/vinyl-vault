@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Html5Qrcode } from 'html5-qrcode'
 import { supabase } from '../services/supabase'
 
 function Dashboard() {
@@ -43,6 +44,9 @@ function Dashboard() {
     })
     const [searchTerm, setSearchTerm] = useState('')
     const [displayMode, setDisplayMode] = useState('cards')
+    const [showScanner, setShowScanner] = useState(false)
+    const [scanner, setScanner] = useState(null)
+    const [barcodeLoading, setBarcodeLoading] = useState(false)
 
     const MUSIC_GENRES = [
         'Rock', 'Pop', 'Pop Rock', 'Pop Latino', 'Indie', 'Indie Rock', 'Alternative Rock', 'Hard Rock',
@@ -277,10 +281,13 @@ function Dashboard() {
             notes: form.notes,
             tracks: cleanTracks,
             cover_path: coverPath || editingRecord?.cover_path || null,
+            cover_url: form.cover_url_external || editingRecord?.cover_url || null,
             accent_color: accentColor,
             wishlist_priority: form.wishlist_priority ? Number(form.wishlist_priority) : null,
             dream_record: form.dream_record || false,
             favorite: form.favorite || false,
+            barcode: form.barcode || null,
+            musicbrainz_id: form.musicbrainz_id || editingRecord?.musicbrainz_id || null
         }
 
         let error
@@ -316,7 +323,9 @@ function Dashboard() {
             status: 'Lo tengo',
             rating: '',
             notes: '',
-            tracks: ['']
+            tracks: [''],
+            barcode: '',
+            cover_url_external: ''
         })
 
         setCoverFile(null)
@@ -329,7 +338,9 @@ function Dashboard() {
         setLoading(false)
     }
 
-    function getCoverUrl(path) {
+    function getCoverUrl(path, externalUrl = null) {
+        if (externalUrl) return externalUrl
+
         if (!path) return null
 
         const { data } = supabase.storage
@@ -380,7 +391,8 @@ function Dashboard() {
             tracks: record.tracks?.length ? record.tracks : [''],
             wishlist_priority: record.wishlist_priority || '',
             dream_record: record.dream_record || false,
-            favorite: record.favorite || false
+            favorite: record.favorite || false,
+            barcode: record.barcode || ''
         })
 
         setCoverFile(null)
@@ -544,6 +556,99 @@ function Dashboard() {
         await loadRecords()
     }
 
+    async function startBarcodeScanner() {
+        setShowScanner(true)
+
+        setTimeout(async () => {
+            const html5QrCode = new Html5Qrcode('barcode-reader')
+            setScanner(html5QrCode)
+
+            try {
+                await html5QrCode.start(
+                    { facingMode: 'environment' },
+                    {
+                        fps: 10,
+                        qrbox: {
+                            width: 280,
+                            height: 160
+                        }
+                    },
+                    async (decodedText) => {
+                        updateForm('barcode', decodedText)
+                        await lookupBarcode(decodedText)
+
+                        await html5QrCode.stop()
+                        setShowScanner(false)
+                        setScanner(null)
+                    }
+                )
+            } catch (error) {
+                console.error(error)
+                alert('No se pudo abrir la cámara')
+                setShowScanner(false)
+            }
+        }, 200)
+    }
+
+    async function stopBarcodeScanner() {
+        if (scanner) {
+            await scanner.stop()
+            setScanner(null)
+        }
+
+        setShowScanner(false)
+    }
+
+    async function lookupBarcode(barcodeValue = form.barcode) {
+        const cleanBarcode = barcodeValue?.trim()
+
+        if (!cleanBarcode) {
+            alert('Primero escanea o escribe un código de barras')
+            return
+        }
+
+        setBarcodeLoading(true)
+
+        const { data, error } = await supabase.functions.invoke('lookup-barcode', {
+            body: {
+                barcode: cleanBarcode
+            }
+        })
+
+        console.log('BARCODE DATA:', data)
+        console.log('BARCODE ERROR:', error)
+
+        setBarcodeLoading(false)
+
+        if (error) {
+            alert(error.message || 'No se pudo buscar el código')
+            return
+        }
+
+        if (data?.error) {
+            alert(data.error)
+            return
+        }
+
+        if (!data?.found) {
+            alert('No he encontrado este código en MusicBrainz')
+            return
+        }
+
+        setForm({
+            ...form,
+            barcode: cleanBarcode,
+            title: data.title || form.title,
+            artist: data.artist || form.artist,
+            release_year: data.release_year || form.release_year,
+            tracks: data.tracks?.length ? data.tracks : form.tracks,
+            cover_url_external: data.cover_url || '',
+            musicbrainz_id: data.musicbrainz_id || ''
+        })
+
+        alert('Datos encontrados. Revisa el formulario antes de guardar.')
+    }
+
     const collectionCount = records.filter(record => record.status === 'Lo tengo').length
     const wishlistCount = records.filter(record => record.status === 'Wishlist').length
     const orderedCount = records.filter(record => record.status === 'Pedido').length
@@ -657,9 +762,9 @@ function Dashboard() {
                                     className="favorite-cover"
                                     onClick={() => setSelectedRecord(record)}
                                 >
-                                    {getCoverUrl(record.cover_path) ? (
+                                    {getCoverUrl(record.cover_path, record.cover_url) ? (
                                         <img
-                                            src={getCoverUrl(record.cover_path)}
+                                            src={getCoverUrl(record.cover_path, record.cover_url)}
                                             alt={record.title}
                                         />
                                     ) : (
@@ -771,7 +876,7 @@ function Dashboard() {
                     {displayMode === 'cards' ? (
                         <section className="record-grid">
                             {filteredRecords.map((record) => {
-                                const coverUrl = getCoverUrl(record.cover_path)
+                                const coverUrl = getCoverUrl(record.cover_path, record.cover_url)
 
                                 return (
                                     <article
@@ -972,6 +1077,26 @@ function Dashboard() {
                                     />
                                 ))}
                             </datalist>
+
+                            <div className="barcode-field">
+                                <input
+                                    placeholder="Código de barras"
+                                    value={form.barcode}
+                                    onChange={(e) => updateForm('barcode', e.target.value)}
+                                />
+
+                                <button type="button" onClick={startBarcodeScanner}>
+                                    Escanear
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => lookupBarcode()}
+                                    disabled={barcodeLoading}
+                                >
+                                    {barcodeLoading ? 'Buscando...' : '🔎 Buscar datos'}
+                                </button>
+                            </div>
 
                             <div className="genre-picker">
                                 <input
@@ -1188,6 +1313,29 @@ function Dashboard() {
                 </div>
             )}
 
+            {showScanner && (
+                <div className="modal-backdrop">
+                    <div className="scanner-modal">
+                        <div className="modal-header">
+                            <div>
+                                <span className="eyebrow">Escáner</span>
+                                <h2>Escanear código</h2>
+                            </div>
+
+                            <button type="button" className="close-btn" onClick={stopBarcodeScanner}>
+                                ×
+                            </button>
+                        </div>
+
+                        <div id="barcode-reader"></div>
+
+                        <p className="scanner-help">
+                            Apunta al código de barras del disco hasta que se detecte automáticamente.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {selectedRecord && (
                 <div className="modal-backdrop" onClick={() => setSelectedRecord(null)}>
                     <div
@@ -1203,8 +1351,8 @@ function Dashboard() {
 
                         <div className="detail-layout">
                             <div className="detail-cover">
-                                {getCoverUrl(selectedRecord.cover_path) ? (
-                                    <img src={getCoverUrl(selectedRecord.cover_path)} alt={selectedRecord.title} />
+                                {getCoverUrl(selectedRecord.cover_path, selectedRecord.cover_url) ? (
+                                    <img src={getCoverUrl(selectedRecord.cover_path, selectedRecord.cover_url)} alt={selectedRecord.title} />
                                 ) : (
                                     <div className="detail-vinyl"></div>
                                 )}

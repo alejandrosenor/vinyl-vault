@@ -1493,3 +1493,40 @@ body.modal-open {
   border-radius: 22px;
   margin: 0 auto 24px;
 }
+
+.barcode-field {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+
+.barcode-field button {
+  padding: 0 16px;
+  border: 0;
+  border-radius: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  background: rgba(246, 196, 107, .18);
+  color: #f6c46b;
+}
+
+.scanner-modal {
+  width: min(520px, 94vw);
+  padding: 26px;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(183, 149, 255, .16), transparent 28%),
+    linear-gradient(135deg, rgba(31, 31, 31, .96), rgba(13, 13, 13, .98));
+  border: 1px solid rgba(255, 255, 255, .12);
+}
+
+#barcode-reader {
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, .12);
+}
+
+.scanner-help {
+  margin-top: 16px;
+  color: #c9c2b8;
+}
