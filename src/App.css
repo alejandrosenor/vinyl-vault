@@ -193,13 +193,24 @@ header {
 
 .record-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 20px;
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .record-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 769px) {
+  .record-grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
 }
 
 .record-card {
   background: #1e1e1e;
-  padding: 20px;
+  padding: 12px;
   border-radius: 16px;
 }
 
@@ -394,11 +405,19 @@ header {
 }
 
 .record-info h3 {
-  font-size: 1.2rem;
-  margin-bottom: 4px;
+  font-size: 1rem;
+  line-height: 1.2;
+  margin-top: 10px;
+  margin-top: 10px;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .record-info p {
+  font-size: .9rem;
   color: #c9c2b8;
 }
 
@@ -577,9 +596,9 @@ header {
 
 .record-art img {
   width: 100%;
-  height: 100%;
+  aspect-ratio: 1;
   object-fit: cover;
-  border-radius: 18px;
+  border-radius: 15px;
 }
 
 .record-tags {
@@ -590,11 +609,11 @@ header {
 }
 
 .record-tags span {
-  padding: 6px 10px;
+  padding: 4px 8px;
   border-radius: 999px;
   background: rgba(255, 255, 255, .08);
   color: #d8d0c5;
-  font-size: .78rem;
+  font-size: .75rem;
 }
 
 @media (max-width: 700px) {
