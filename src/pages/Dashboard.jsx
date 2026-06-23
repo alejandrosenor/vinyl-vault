@@ -78,6 +78,18 @@ function Dashboard() {
         }
     }, [showForm, selectedRecord, selectedArtist, editingArtist])
 
+    useEffect(() => {
+        if (selectedRecord) {
+            document.body.classList.add("modal-open");
+        } else {
+            document.body.classList.remove("modal-open");
+        }
+
+        return () => {
+            document.body.classList.remove("modal-open");
+        };
+    }, [selectedRecord]);
+
     async function loadRecords() {
         const { data } = await supabase
             .from('records')

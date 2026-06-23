@@ -1402,19 +1402,33 @@ header {
 .record-detail-modal {
   position: relative;
   overflow: hidden;
+
   background:
-    linear-gradient(135deg, rgba(18, 18, 18, .98), rgba(5, 5, 5, .98)) !important;
-  border-color: var(--accent-color) !important;
+    linear-gradient(135deg,
+      rgba(15, 15, 18, .98),
+      rgba(8, 8, 10, .98)) !important;
+
+  border-color: var(--accent-color);
 }
 
 .record-detail-modal::before {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: -20%;
+
   background:
-    radial-gradient(circle at 18% 14%, var(--accent-color), transparent 42%),
-    radial-gradient(circle at 92% 82%, var(--accent-color), transparent 48%);
-  opacity: .38;
+    radial-gradient(circle at 10% 10%,
+      var(--accent-color) 0%,
+      transparent 65%),
+
+    radial-gradient(circle at 100% 100%,
+      var(--accent-color) 0%,
+      transparent 75%);
+
+  opacity: .28;
+
+  filter: blur(70px);
+
   pointer-events: none;
 }
 
@@ -1460,4 +1474,22 @@ header {
     right: 18px;
     left: auto;
   }
+}
+
+/* bloquea scroll del fondo cuando el modal está abierto */
+body.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+/* portada dentro de su sitio */
+.record-detail-cover {
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
+  border-radius: 22px;
+  margin: 0 auto 24px;
 }
