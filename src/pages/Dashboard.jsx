@@ -67,10 +67,14 @@ function Dashboard() {
     useEffect(() => {
         const modalOpen = showForm || selectedRecord || selectedArtist || editingArtist
 
-        document.body.style.overflow = modalOpen ? 'hidden' : ''
+        if (modalOpen) {
+            document.body.classList.add('modal-open')
+        } else {
+            document.body.classList.remove('modal-open')
+        }
 
         return () => {
-            document.body.style.overflow = ''
+            document.body.classList.remove('modal-open')
         }
     }, [showForm, selectedRecord, selectedArtist, editingArtist])
 
@@ -109,6 +113,62 @@ function Dashboard() {
     function removeTrackInput(index) {
         const newTracks = form.tracks.filter((_, i) => i !== index)
         setForm({ ...form, tracks: newTracks.length ? newTracks : [''] })
+    }
+
+    async function extractAccentColor(file) {
+        return new Promise((resolve) => {
+            const img = new Image()
+            const url = URL.createObjectURL(file)
+
+            img.onload = () => {
+                const canvas = document.createElement('canvas')
+                const ctx = canvas.getContext('2d')
+
+                canvas.width = 60
+                canvas.height = 60
+
+                ctx.drawImage(img, 0, 0, 60, 60)
+
+                const { data } = ctx.getImageData(0, 0, 60, 60)
+
+                let r = 0
+                let g = 0
+                let b = 0
+                let count = 0
+
+                for (let i = 0; i < data.length; i += 4) {
+                    const red = data[i]
+                    const green = data[i + 1]
+                    const blue = data[i + 2]
+                    const alpha = data[i + 3]
+
+                    const brightness = red + green + blue
+
+                    if (alpha > 120 && brightness > 80 && brightness < 720) {
+                        r += red
+                        g += green
+                        b += blue
+                        count++
+                    }
+                }
+
+                URL.revokeObjectURL(url)
+
+                if (!count) {
+                    resolve('#b795ff')
+                    return
+                }
+
+                resolve(`rgb(${Math.round(r / count)}, ${Math.round(g / count)}, ${Math.round(b / count)})`)
+            }
+
+            img.onerror = () => {
+                URL.revokeObjectURL(url)
+                resolve('#b795ff')
+            }
+
+            img.src = url
+        })
     }
 
     async function addRecord(e) {
@@ -162,8 +222,10 @@ function Dashboard() {
         }
 
         let coverPath = null
+        let accentColor = editingRecord?.accent_color || null
 
         if (coverFile) {
+            accentColor = await extractAccentColor(coverFile)
             const fileExt = coverFile.name.split('.').pop()
             const fileName = `${user.id}/${Date.now()}.${fileExt}`
 
@@ -203,9 +265,10 @@ function Dashboard() {
             notes: form.notes,
             tracks: cleanTracks,
             cover_path: coverPath || editingRecord?.cover_path || null,
+            accent_color: accentColor,
             wishlist_priority: form.wishlist_priority ? Number(form.wishlist_priority) : null,
             dream_record: form.dream_record || false,
-            favorite: form.favorite || false
+            favorite: form.favorite || false,
         }
 
         let error
@@ -1115,7 +1178,13 @@ function Dashboard() {
 
             {selectedRecord && (
                 <div className="modal-backdrop" onClick={() => setSelectedRecord(null)}>
-                    <div className="detail-modal" onClick={(e) => e.stopPropagation()}>
+                    <div
+                        className="detail-modal record-detail-modal"
+                        style={{
+                            '--accent-color': selectedRecord.accent_color || '#b795ff'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <button className="close-btn detail-close" onClick={() => setSelectedRecord(null)}>
                             ×
                         </button>

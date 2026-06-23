@@ -34,6 +34,10 @@ body {
   font-family: Arial, sans-serif;
 }
 
+body.modal-open {
+  overflow: hidden;
+}
+
 input,
 select,
 textarea,
@@ -442,6 +446,7 @@ header {
   padding: 22px;
   background: rgba(0, 0, 0, .72);
   backdrop-filter: blur(14px);
+  overflow: hidden !important;
 }
 
 .record-modal {
@@ -1233,12 +1238,23 @@ header {
 
   .record-modal,
   .detail-modal {
-    width: 100%;
-    max-width: 100%;
-    max-height: calc(100dvh - 32px);
-    margin: 0 auto;
-    padding: 28px 20px;
-    border-radius: 28px;
+    height: min(92dvh, 900px);
+    max-height: none !important;
+    overflow-y: auto !important;
+    overscroll-behavior: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  @media (max-width: 768px) {
+    .modal-backdrop {
+      align-items: flex-start;
+      padding: 16px;
+    }
+
+    .record-modal,
+    .detail-modal {
+      height: calc(100dvh - 32px);
+    }
   }
 
   .detail-layout {
@@ -1380,5 +1396,68 @@ header {
   .stat-card {
     padding: 20px;
     min-width: 0;
+  }
+}
+
+.record-detail-modal {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(18, 18, 18, .98), rgba(5, 5, 5, .98)) !important;
+  border-color: var(--accent-color) !important;
+}
+
+.record-detail-modal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 14%, var(--accent-color), transparent 42%),
+    radial-gradient(circle at 92% 82%, var(--accent-color), transparent 48%);
+  opacity: .38;
+  pointer-events: none;
+}
+
+.record-detail-modal>* {
+  position: relative;
+  z-index: 1;
+}
+
+.record-detail-modal .detail-cover {
+  box-shadow:
+    0 0 110px color-mix(in srgb, var(--accent-color) 65%, transparent),
+    0 30px 80px rgba(0, 0, 0, .55);
+}
+
+.record-detail-modal .detail-tags span {
+  background: color-mix(in srgb, var(--accent-color) 24%, rgba(255, 255, 255, .08));
+  border-color: color-mix(in srgb, var(--accent-color) 55%, rgba(255, 255, 255, .12));
+}
+
+.modal-backdrop {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.record-modal,
+.detail-modal {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.record-detail-modal .detail-close {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  left: auto;
+  z-index: 5;
+}
+
+@media (max-width: 768px) {
+  .record-detail-modal .detail-close {
+    top: 18px;
+    right: 18px;
+    left: auto;
   }
 }
