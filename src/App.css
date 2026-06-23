@@ -1223,3 +1223,47 @@ header {
   color: #bfb8af;
   font-size: .9rem;
 }
+
+@media (max-width: 768px) {
+  .modal-backdrop {
+    align-items: flex-start;
+    padding: 16px;
+    overflow-y: auto;
+  }
+
+  .record-modal,
+  .detail-modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100dvh - 32px);
+    margin: 0 auto;
+    padding: 28px 20px;
+    border-radius: 28px;
+  }
+
+  .detail-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .detail-cover {
+    width: 100%;
+    max-width: 100%;
+    padding: 10px;
+  }
+
+  .detail-info h2 {
+    font-size: clamp(2.4rem, 14vw, 4rem);
+    letter-spacing: -2px;
+  }
+
+  .close-btn,
+  .detail-close {
+    top: 18px;
+    right: 18px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

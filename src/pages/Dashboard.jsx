@@ -64,6 +64,16 @@ function Dashboard() {
         loadArtists()
     }, [])
 
+    useEffect(() => {
+        const modalOpen = showForm || selectedRecord || selectedArtist || editingArtist
+
+        document.body.style.overflow = modalOpen ? 'hidden' : ''
+
+        return () => {
+            document.body.style.overflow = ''
+        }
+    }, [showForm, selectedRecord, selectedArtist, editingArtist])
+
     async function loadRecords() {
         const { data } = await supabase
             .from('records')
