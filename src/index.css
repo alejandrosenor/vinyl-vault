@@ -1,6 +1,15 @@
 html,
 body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   touch-action: manipulation;
   -webkit-text-size-adjust: 100%;
   overscroll-behavior: none;
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
