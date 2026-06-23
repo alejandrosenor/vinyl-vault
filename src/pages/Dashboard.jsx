@@ -47,6 +47,7 @@ function Dashboard() {
     const [showScanner, setShowScanner] = useState(false)
     const [scanner, setScanner] = useState(null)
     const [barcodeLoading, setBarcodeLoading] = useState(false)
+    const [playingTrack, setPlayingTrack] = useState(null)
 
     const MUSIC_GENRES = [
         'Rock', 'Pop', 'Pop Rock', 'Pop Latino', 'Indie', 'Indie Rock', 'Alternative Rock', 'Hard Rock',
@@ -647,6 +648,33 @@ function Dashboard() {
         })
 
         alert('Datos encontrados. Revisa el formulario antes de guardar.')
+    }
+
+    async function playTrackFromSpotify(trackTitle, record) {
+        const { data, error } = await supabase.functions.invoke('search-spotify-track', {
+            body: {
+                trackTitle,
+                artistName: record.artist
+            }
+        })
+
+        console.log('SPOTIFY TRACK:', data, error)
+
+        if (error || data?.error) {
+            alert('No se pudo buscar la canción en Spotify')
+            return
+        }
+
+        if (!data?.found) {
+            alert('No he encontrado esta canción en Spotify')
+            return
+        }
+
+        setPlayingTrack({
+            id: data.id,
+            title: data.name,
+            artist: data.artists?.join(', ') || record.artist
+        })
     }
 
     const collectionCount = records.filter(record => record.status === 'Lo tengo').length
@@ -1452,10 +1480,37 @@ function Dashboard() {
                                             {selectedRecord.tracks.map((track, index) => (
                                                 <li key={index}>
                                                     <span>{String(index + 1).padStart(2, '0')}</span>
-                                                    {track}
+                                                    <span>{track}</span>
+
+                                                    <button
+                                                        type="button"
+                                                        className="play-track-btn"
+                                                        onClick={() => playTrackFromSpotify(track, selectedRecord)}
+                                                    >
+                                                        ▶
+                                                    </button>
                                                 </li>
                                             ))}
                                         </ol>
+                                    </div>
+                                )}
+
+                                {playingTrack && (
+                                    <div className="spotify-player">
+                                        <div className="spotify-player-header">
+                                            <span>Sonando ahora</span>
+                                            <button onClick={() => setPlayingTrack(null)}>×</button>
+                                        </div>
+
+                                        <p>{playingTrack.title} · {playingTrack.artist}</p>
+
+                                        <iframe
+                                            src={`https://open.spotify.com/embed/track/${playingTrack.id}`}
+                                            width="100%"
+                                            height="152"
+                                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                                            loading="lazy"
+                                        />
                                     </div>
                                 )}
 
