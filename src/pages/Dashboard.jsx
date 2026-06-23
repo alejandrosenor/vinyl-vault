@@ -496,6 +496,42 @@ function Dashboard() {
         return matchesView && matchesSearch
     })
 
+    const totalTracks = records.reduce((total, record) => {
+        return total + (record.tracks?.length || 0)
+    }, 0)
+
+    const uniqueGenres = [
+        ...new Set(records.flatMap(record => record.genres || []))
+    ]
+
+    const topArtist = artists
+        .map(artist => ({
+            ...artist,
+            count: records.filter(record =>
+                record.artist_id === artist.id || record.artist === artist.name
+            ).length
+        }))
+        .sort((a, b) => b.count - a.count)[0]
+
+    const topGenre = uniqueGenres
+        .map(genre => ({
+            genre,
+            count: records.filter(record =>
+                record.genres?.includes(genre)
+            ).length
+        }))
+        .sort((a, b) => b.count - a.count)[0]
+
+    const topDecade = Object.entries(
+        records.reduce((acc, record) => {
+            if (!record.release_year) return acc
+
+            const decade = `${Math.floor(record.release_year / 10) * 10}s`
+            acc[decade] = (acc[decade] || 0) + 1
+            return acc
+        }, {})
+    ).sort((a, b) => b[1] - a[1])[0]
+
     return (
         <div className="dashboard-page">
             <header className="app-header">
@@ -573,6 +609,13 @@ function Dashboard() {
                     onClick={() => setMainView('artists')}
                 >
                     🎤 Artistas
+                </button>
+
+                <button
+                    className={mainView === 'stats' ? 'active' : ''}
+                    onClick={() => setMainView('stats')}
+                >
+                    📊 Estadísticas
                 </button>
             </div>
 
@@ -754,12 +797,80 @@ function Dashboard() {
                 </section>
             )}
 
+            {mainView === 'stats' && (
+                <section className="stats-page">
+                    <div className="stats-header">
+                        <span className="eyebrow">Tu universo musical</span>
+                        <h2>Estadísticas</h2>
+                        <p>Una mirada rápida a tu colección, wishlist y artistas.</p>
+                    </div>
+
+                    <div className="stats-grid">
+                        <div className="stat-card">
+                            <span>💿</span>
+                            <h3>{collectionCount}</h3>
+                            <p>Discos en colección</p>
+                        </div>
+
+                        <div className="stat-card">
+                            <span>❤️</span>
+                            <h3>{favoritesCount}</h3>
+                            <p>Favoritos</p>
+                        </div>
+
+                        <div className="stat-card">
+                            <span>⭐</span>
+                            <h3>{wishlistCount}</h3>
+                            <p>Wishlist</p>
+                        </div>
+
+                        <div className="stat-card">
+                            <span>🎤</span>
+                            <h3>{artists.length}</h3>
+                            <p>Artistas</p>
+                        </div>
+
+                        <div className="stat-card">
+                            <span>🎵</span>
+                            <h3>{totalTracks}</h3>
+                            <p>Canciones catalogadas</p>
+                        </div>
+
+                        <div className="stat-card">
+                            <span>🎧</span>
+                            <h3>{uniqueGenres.length}</h3>
+                            <p>Géneros distintos</p>
+                        </div>
+                    </div>
+
+                    <div className="stats-highlights">
+                        <div>
+                            <h3>Artista más repetido</h3>
+                            <p>{topArtist?.name || 'Sin datos'}</p>
+                            <span>{topArtist?.count || 0} discos</span>
+                        </div>
+
+                        <div>
+                            <h3>Género dominante</h3>
+                            <p>{topGenre?.genre || 'Sin datos'}</p>
+                            <span>{topGenre?.count || 0} discos</span>
+                        </div>
+
+                        <div>
+                            <h3>Década más presente</h3>
+                            <p>{topDecade?.[0] || 'Sin datos'}</p>
+                            <span>{topDecade?.[1] || 0} discos</span>
+                        </div>
+                    </div>
+                </section>
+            )}
+
             {showForm && (
                 <div className="modal-backdrop">
                     <form className="record-modal" onSubmit={addRecord}>
                         <div className="modal-header">
                             <div>
-                                <span className="eyebrow">Nuevo tesoro</span>
+                                <span className="eyebrow">Nuevo disco</span>
                                 <h2>{editingRecord ? 'Editar disco' : 'Añadir disco'}</h2>
                             </div>
 
